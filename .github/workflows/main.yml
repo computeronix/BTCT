@@ -16,6 +16,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           owner: GuntharDeNiro
           base: master
-          head: master
+          head: stable
           auto_approve: false
           personal_token: ${{ secrets.PERSONAL_TOKEN }}
