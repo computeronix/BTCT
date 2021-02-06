@@ -1,0 +1,7 @@
+FROM ubuntu:latest AS build-env
+ENV DIR="/tmp"
+WORKDIR "${DIR}"
+
+
+#cleanup
+#RUN ["rm", "-rf", "${DIR}"]
