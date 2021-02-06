@@ -32,5 +32,5 @@ jobs:
         pr_message: Updated release from forked release # optional
         # ignore Exceptions
         ignore_fail: # optional
-        auto_approve: true
+        auto_approve: false
         personal_token: ${{ secrets.PERSONAL_TOKEN }}
