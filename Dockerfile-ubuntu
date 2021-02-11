@@ -29,10 +29,9 @@ LABEL \
   website="https://aka.wf/ai6" \
   description="docker file ${DISTRO} - ${VERSION}, install gunbot version - builder - ${GUNBOTVERSION}"
 
-WORKDIR /tmp
+COPY --from=gunbot-builder /tmp/gunbot /opt/gunbot
 
-COPY --from=gunbot-builder /tmp/gunbot /tmp/gunbot
-
+#provide script as CMD, accept parameters
 #CMD chronyd
 
 #HEALTHCHECK --interval=60s --timeout=5s \
