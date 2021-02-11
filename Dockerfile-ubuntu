@@ -1,14 +1,28 @@
-ARG DISTRO="ubuntu" AS gunbot-builder
+ARG DISTRO="ubuntu"
 ARG VERSION="latest"
 ARG GUNBOTVERSION="latest"
 ARG GITHUBOWNER="GuntharDeNiro"
 ARG GITHUBREPO="BTCT"
+
+FROM alpine:latest AS gunbot-builder
+ARG GUNBOTVERSION
+ARG GITHUBOWNER
+ARG GITHUBREPO
+
+WORKDIR /tmp
+
+RUN apk update \
+  && apk add --no-cache wget jq unzip \
+  && rm -rf /var/lib/apt/lists/* \
+  && wget -q -nv -O gunbot.zip $(wget -q -nv -O- https://api.github.com/repos/${GITHUBOWNER}/${GITHUBREPO}/releases/${GUNBOTVERSION} 2>/dev/null | jq -r '.assets[] | select(.browser_download_url | contains("lin")) | .browser_download_url') \
+  && unzip -d . gunbot.zip \
+  && mv lin* gunbot
+
+
 FROM ${DISTRO}:${VERSION}
 ARG DISTRO
 ARG VERSION
 ARG GUNBOTVERSION
-ARG GITHUBOWNER
-ARG GITHUBREPO
 
 LABEL \
   maintainer="computeronix" \
@@ -17,18 +31,7 @@ LABEL \
 
 WORKDIR /tmp
 
-RUN apt-get update \
-  && apt-get -y install wget jq unzip \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN wget -q -nv -O gunbot.zip $(wget -q -nv -O- https://api.github.com/repos/${GITHUBOWNER}/${GITHUBREPO}/releases/${GUNBOTVERSION} 2>/dev/null | jq -r '.assets[] | select(.browser_download_url | contains("lin")) | .browser_download_url')
-RUN unzip -d gunbot gunbot.zip
-
-#RUN install gunbot oneclick setup sh
-#ADD eventually URL
-#ADD gunbot_oneclick.sh /tmp/gunbot_oneclick.sh
-#RUN .\gunbot_oneclick.sh
-
+COPY --from=gunbot-builder /tmp/gunbot /tmp/gunbot
 
 #CMD chronyd
 
