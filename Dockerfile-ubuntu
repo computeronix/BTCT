@@ -3,6 +3,9 @@ ARG VERSION="latest"
 ARG GUNBOTVERSION="latest"
 ARG GITHUBOWNER="GuntharDeNiro"
 ARG GITHUBREPO="BTCT"
+ARG GUNBOTDIR="gunbot"
+ARG GUNBOTSERVICEDESC="Gunbot - Crypto Trading Bot"
+ARG GUNBOTSERVICEFILE="/etc/systemd/system/gunbot.service"
 
 FROM alpine:latest AS gunbot-builder
 ARG GUNBOTVERSION
@@ -23,13 +26,37 @@ FROM ${DISTRO}:${VERSION}
 ARG DISTRO
 ARG VERSION
 ARG GUNBOTVERSION
+ARG GUNBOTDIR
+ARG GUNBOTSERVICEDESC
+ARG GUNBOTSERVICEFILE
 
 LABEL \
   maintainer="computeronix" \
   website="https://aka.wf/ai6" \
   description="docker file ${DISTRO} - ${VERSION}, install gunbot version - builder - ${GUNBOTVERSION}"
 
-COPY --from=gunbot-builder /tmp/gunbot /opt/gunbot
+#remove vim in prod
+RUN apt-get update \
+  && apt-get -y install systemctl chrony vim \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=gunbot-builder /tmp/gunbot /opt/${GUNBOTDIR}
+
+#gunthy-linux??
+RUN printf '[Unit]\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'Description=${GUNBOTSERVICEDESC}\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'After=network-online.target\n' >> ${GUNBOTSERVICEFILE} \
+  && printf '\n' >> ${GUNBOTSERVICEFILE} \
+  && printf '[Service]\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'Type=simple\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'WorkingDirectory=/opt/${GUNBOTDIR}\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'ExecStart=/opt/${GUNBOTDIR}/gunthy-linux\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'StandardOutput=file:/opt/gunbot/srvout.log\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'StandardError=file:/var/srverr.log\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'Restart=on-failure\n' >> ${GUNBOTSERVICEFILE} \
+  && printf '\n' >> ${GUNBOTSERVICEFILE} \
+  && printf '[Install]\n' >> ${GUNBOTSERVICEFILE} \
+  && printf 'WantedBy=multi-user.target\n' >> ${GUNBOTSERVICEFILE}
 
 #provide script as CMD, accept parameters
 #CMD chronyd
