@@ -4,8 +4,10 @@ ARG GUNBOTVERSION="latest"
 ARG GITHUBOWNER="GuntharDeNiro"
 ARG GITHUBREPO="BTCT"
 ARG GUNBOTDIR="gunbot"
-ARG GUNBOTSERVICEDESC="Gunbot - Crypto Trading Bot"
+ARG GUNBOTSERVICEDESC="gunbot, an automated crypto trading bot"
 ARG GUNBOTSERVICEFILE="/etc/systemd/system/gunbot.service"
+ARG GUNBOTPORT="5000"
+ARG STARTUP="/tmp/startup.sh"
 
 FROM alpine:latest AS gunbot-builder
 ARG GUNBOTVERSION
@@ -17,7 +19,7 @@ WORKDIR /tmp
 RUN apk update \
   && apk add --no-cache wget jq unzip \
   && rm -rf /var/lib/apt/lists/* \
-  && wget -q -nv -O gunbot.zip $(wget -q -nv -O- https://api.github.com/repos/${GITHUBOWNER}/${GITHUBREPO}/releases/${GUNBOTVERSION} 2>/dev/null | jq -r '.assets[] | select(.browser_download_url | contains("lin")) | .browser_download_url') \
+  && wget -q -nv -O gunbot.zip $(wget -q -nv -O- https://api.github.com/repos/${GITHUBOWNER}/${GITHUBREPO}/releases/${GUNBOTVERSION} 2>/dev/null |  jq -r '.assets[] | select(.browser_download_url | contains("lin")) | .browser_download_url') \
   && unzip -d . gunbot.zip \
   && mv lin* gunbot
 
@@ -29,37 +31,45 @@ ARG GUNBOTVERSION
 ARG GUNBOTDIR
 ARG GUNBOTSERVICEDESC
 ARG GUNBOTSERVICEFILE
+ARG GUNBOTPORT
+ARG STARTUP
 
 LABEL \
   maintainer="computeronix" \
   website="https://aka.wf/ai6" \
-  description="docker file ${DISTRO} - ${VERSION}, install gunbot version - builder - ${GUNBOTVERSION}"
+  description="docker file ${DISTRO} - ${VERSION}, containerized gunbot - ${GUNBOTVERSION}"
 
-#remove vim in prod
 RUN apt-get update \
-  && apt-get -y install systemctl chrony vim \
+  && apt-get -y install systemctl chrony \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=gunbot-builder /tmp/gunbot /opt/${GUNBOTDIR}
 
-#gunthy-linux??
-RUN printf '[Unit]\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'Description=${GUNBOTSERVICEDESC}\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'After=network-online.target\n' >> ${GUNBOTSERVICEFILE} \
-  && printf '\n' >> ${GUNBOTSERVICEFILE} \
-  && printf '[Service]\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'Type=simple\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'WorkingDirectory=/opt/${GUNBOTDIR}\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'ExecStart=/opt/${GUNBOTDIR}/gunthy-linux\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'StandardOutput=file:/opt/gunbot/srvout.log\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'StandardError=file:/var/srverr.log\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'Restart=on-failure\n' >> ${GUNBOTSERVICEFILE} \
-  && printf '\n' >> ${GUNBOTSERVICEFILE} \
-  && printf '[Install]\n' >> ${GUNBOTSERVICEFILE} \
-  && printf 'WantedBy=multi-user.target\n' >> ${GUNBOTSERVICEFILE}
+RUN printf "[Unit]\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "Description=${GUNBOTSERVICEDESC}\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "After=network-online.target\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "[Service]\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "Type=simple\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "WorkingDirectory=/opt/${GUNBOTDIR}\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "ExecStart=/opt/${GUNBOTDIR}/gunthy-linux\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "Restart=on-failure\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "[Install]\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "WantedBy=multi-user.target\n" >> ${GUNBOTSERVICEFILE} \
+  && systemctl disable --now gunbot \
+  && systemctl disable --now chrony \
+  && printf "#!/bin/sh\n" >> ${STARTUP} \
+  && printf "\n" >> ${STARTUP} \
+  && printf "systemctl enable --now chrony\n" >> ${STARTUP} \
+  && printf "systemctl enable --now gunbot\n" >> ${STARTUP} \
+  && printf "\n" >> ${STARTUP} \
+  && printf "while sleep 60; do\n" >> ${STARTUP} \
+  && printf "echo still running...\n" >> ${STARTUP} \
+  && printf "done\n" >> ${STARTUP} \
+  && chmod +x ${STARTUP}
 
-#provide script as CMD, accept parameters
-#CMD chronyd
+EXPOSE ${GUNBOTPORT}
 
-#HEALTHCHECK --interval=60s --timeout=5s \
-#  CMD chronyc tracking || exit 1
+CMD ["/tmp/startup.sh"]
+
