@@ -16,6 +16,7 @@ the built-in start-up script performs the following
 Default port: 5000 -> expose to host to access can be any port you want
 
 example to get started with recommended commands - data persists (note it takes about 5 minutes to start if your host directory is empty - future start times are about 2 minutes or less)
+
 docker run -d --cap-add=SYS_TIME -p 5000:5000 -v "/host/directory/to/volume:/tmp/gunbot" computeronix/gunbot:gunbot-ubuntu-latest
 
 Advanced users: add bash/sh to override startup script docker run -d --cap-add=SYS_TIME -p 5000:5000 -v "/host/directory/to/volume:/tmp/gunbot" computeronix/gunbot:gunbot-ubuntu-latest bash
