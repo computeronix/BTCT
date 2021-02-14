@@ -2,19 +2,27 @@ Current Gunbot version: v21.1.0
 - Official Stable Releases: [HERE](https://github.com/GuntharDeNiro/BTCT/releases/tag/2110)
 
 
-ALPHA - first release - protoype
+ALPHA - first release - protoype (will clean up readme)
 
 Sets up gunbot (with systemctl to run in the background) and includes chrony to keep time
 
 Requirements to run - host needs to supply SYS_TIME permissions (working to look for this permission and ignore and workaround if the host is unable to supply these (restart the container every hour or so)
 
+the built-in start-up script performs the following
++syncs host volume data to container and looks for difference in gunbot data (gunbot data is ignored and not overwritten only processes)
++systemctl processes are enabled (chrony and gunbot)
++forever script starts to ensure container doesn't close
+
 Default port: 5000 -> expose to host to access can be any port you want
 
-example command runs a de-tached container that starts everything docker run -d --cap-add=SYS_TIME -p 5000:5000local/gunbot
+example to get started with recommended commands - data persists (note it takes about 5 minutes to start if your host directory is empty - future start times are about 2 minutes or less)
+docker run -d --cap-add=SYS_TIME -p 5000:5000 -v "/host/directory/to/volume:/tmp/gunbot" computeronix/gunbot:gunbot-ubuntu-latest
 
-Advanced users: add bash/sh to override startup script docker run -d --cap-add=SYS_TIME -p 5000:5000local/gunbot bash
+Advanced users: add bash/sh to override startup script docker run -d --cap-add=SYS_TIME -p 5000:5000 -v "/host/directory/to/volume:/tmp/gunbot" computeronix/gunbot:gunbot-ubuntu-latest bash
 
-Don't forget to start chrony service and gunbot service when ready systemctl enable --now chrony systemctl enable --now gunbot
+Run the file /tmp/startup.sh when ready to fire off the bot
+
+will write troubleshooting article and how to connect in to pull gunbot.service data if needed
 
 Submit issues/feedback/feature requests at the linked GitHub site
 
