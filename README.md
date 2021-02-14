@@ -29,6 +29,12 @@ Submit issues/feedback/feature requests at the linked GitHub site
 
 File locations: /opt/gunbot -> gunbot stuff /var/log/journal/gunbot.service -> gunbot console log /tmp/startup.sh (auto executes using default command above)
 
+
+Attach to a running container:
+
+docker exec -it id/nameofcontainer bash
+
+
 Roadmap +mounting volume support is coming soon to then look for data files and take action from there -v "/full/path/host/gunbot/files:/opt/gunbot" -> right now clears the folder also will need to de-couple gunbot processes from data
 
 #eventually add checks for failure of chrony or gunbot and then report back
