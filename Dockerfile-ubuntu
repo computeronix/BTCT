@@ -40,7 +40,7 @@ LABEL \
   description="docker file ${DISTRO} - ${VERSION}, containerized gunbot - ${GUNBOTVERSION}"
 
 RUN apt-get update \
-  && apt-get -y install systemctl chrony rsync vim \
+  && apt-get -y install systemctl chrony rsync \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=gunbot-builder /tmp/gunbot /opt/gunbot
@@ -82,6 +82,5 @@ RUN printf "[Unit]\n" >> ${GUNBOTSERVICEFILE} \
   && printf "new_gui.sqlite\n" >> /tmp/exclude.txt
 
 EXPOSE ${GUNBOTPORT}
-
+VOLUME ["/tmp/gunbot"]
 CMD ["/tmp/startup.sh"]
-
