@@ -3,7 +3,7 @@ ARG VERSION="latest"
 ARG GUNBOTVERSION="latest"
 ARG GITHUBOWNER="GuntharDeNiro"
 ARG GITHUBREPO="BTCT"
-ARG GUNBOTDIR="gunbot"
+ARG GUNBOTDIR="/tmp/gunbot"
 ARG GUNBOTSERVICEDESC="gunbot, an automated crypto trading bot"
 ARG GUNBOTSERVICEFILE="/etc/systemd/system/gunbot.service"
 ARG GUNBOTPORT="5000"
@@ -40,10 +40,10 @@ LABEL \
   description="docker file ${DISTRO} - ${VERSION}, containerized gunbot - ${GUNBOTVERSION}"
 
 RUN apt-get update \
-  && apt-get -y install systemctl chrony \
+  && apt-get -y install systemctl chrony rsync vim \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=gunbot-builder /tmp/gunbot /opt/${GUNBOTDIR}
+COPY --from=gunbot-builder /tmp/gunbot /opt/gunbot
 
 RUN printf "[Unit]\n" >> ${GUNBOTSERVICEFILE} \
   && printf "Description=${GUNBOTSERVICEDESC}\n" >> ${GUNBOTSERVICEFILE} \
@@ -51,8 +51,8 @@ RUN printf "[Unit]\n" >> ${GUNBOTSERVICEFILE} \
   && printf "\n" >> ${GUNBOTSERVICEFILE} \
   && printf "[Service]\n" >> ${GUNBOTSERVICEFILE} \
   && printf "Type=simple\n" >> ${GUNBOTSERVICEFILE} \
-  && printf "WorkingDirectory=/opt/${GUNBOTDIR}\n" >> ${GUNBOTSERVICEFILE} \
-  && printf "ExecStart=/opt/${GUNBOTDIR}/gunthy-linux\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "WorkingDirectory=${GUNBOTDIR}\n" >> ${GUNBOTSERVICEFILE} \
+  && printf "ExecStart=${GUNBOTDIR}/gunthy-linux\n" >> ${GUNBOTSERVICEFILE} \
   && printf "Restart=on-failure\n" >> ${GUNBOTSERVICEFILE} \
   && printf "\n" >> ${GUNBOTSERVICEFILE} \
   && printf "[Install]\n" >> ${GUNBOTSERVICEFILE} \
@@ -61,13 +61,25 @@ RUN printf "[Unit]\n" >> ${GUNBOTSERVICEFILE} \
   && systemctl disable --now chrony \
   && printf "#!/bin/sh\n" >> ${STARTUP} \
   && printf "\n" >> ${STARTUP} \
+  && printf "echo syncing mounted host content with container...\n" >> ${STARTUP} \
+  && printf "rsync -r --ignore-existing --backup-dir=/tmp/backup --progress --log-file=/tmp/logfile.log /opt/gunbot /tmp \n" >> ${STARTUP} \
+  && printf "rsync -ru --backup-dir=/tmp/backup --progress --exclude-from=/tmp/exclude.txt --log-file=/tmp/logfile.log /opt/gunbot /tmp \n" >> ${STARTUP} \
+  && printf "echo starting services...\n" >> ${STARTUP} \
   && printf "systemctl enable --now chrony\n" >> ${STARTUP} \
   && printf "systemctl enable --now gunbot\n" >> ${STARTUP} \
   && printf "\n" >> ${STARTUP} \
   && printf "while sleep 60; do\n" >> ${STARTUP} \
   && printf "echo still running...\n" >> ${STARTUP} \
   && printf "done\n" >> ${STARTUP} \
-  && chmod +x ${STARTUP}
+  && chmod +x ${STARTUP} \
+  && printf "UTAconfig.json\n" >> /tmp/exclude.txt \
+  && printf "autoconfig.json\n" >> /tmp/exclude.txt \
+  && printf "backups\n" >> /tmp/exclude.txt \
+  && printf "config.js\n" >> /tmp/exclude.txt \
+  && printf "gunbotgui.db\n" >> /tmp/exclude.txt \
+  && printf "json\n" >> /tmp/exclude.txt \
+  && printf "logs\n" >> /tmp/exclude.txt \
+  && printf "new_gui.sqlite\n" >> /tmp/exclude.txt
 
 EXPOSE ${GUNBOTPORT}
 
