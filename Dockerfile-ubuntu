@@ -40,7 +40,7 @@ LABEL \
   description="docker file ${DISTRO} - ${VERSION}, containerized gunbot - ${GUNBOTVERSION}"
 
 RUN apt-get update \
-  && apt-get -y install systemctl chrony rsync \
+  && apt-get -y install systemctl chrony rsync fontconfig \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=gunbot-builder /tmp/gunbot /opt/gunbot
